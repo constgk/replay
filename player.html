@@ -1,0 +1,164 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.11.8/semantic.min.css"/>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.11.8/semantic.min.js"></script>    
+    </head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #drop_zone {
+            width: 100%; 
+            height: 100%;
+            display: flex; 
+            text-align: center;
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
+        }
+    </style>
+    <body>
+        <script>
+            var replayStart = 0;
+            var playbackSpeed = 1;
+
+            // --- Elements ---
+
+            function audioPlayerElement() {
+                return document.getElementById('audio_player');
+            }
+            function trackNameElement() {
+                return document.getElementById('track_name');
+            }
+            function replayDescriptionElement() {
+                return document.getElementById('replay_description');
+            }
+
+            // --- Helpers ---
+            
+            function formatTime(value) {
+                var pos = Math.floor(value);
+                var minutes = Math.floor(pos / 60);
+                var seconds = pos % 60;
+                var secondsStr = '' + seconds;
+                if (secondsStr.length == 1) {
+                    secondsStr = "0" + secondsStr;
+                }
+                return minutes + ":" + secondsStr
+            }
+
+            function speedButtonId(value) {
+                var speedValues = [0.5, 0.75, 1, 1.5, 2];
+                var buttonIndex = speedValues.indexOf(value);
+                return "speed_button_" + (buttonIndex + 1);
+            }
+
+            // --- Updates ---
+
+            function changeTrackName(value) {
+                trackNameElement().innerHTML = value;
+            }
+
+            function changeReplayStart(value) {
+                replayStart = value;
+                replayDescriptionElement().innerHTML = "Replay starts at " + formatTime(replayStart);
+            }
+
+            function changeSpeed(value) {
+                document.getElementById(speedButtonId(playbackSpeed)).classList.remove("active");
+                playbackSpeed = value;
+                document.getElementById(speedButtonId(playbackSpeed)).classList.add("active");
+                audioPlayerElement().playbackRate = value;
+            }
+
+            function changeSource(file) {
+                var objectURL = URL.createObjectURL(file);
+                audioPlayerElement().src = objectURL;
+                changeTrackName(file.name);
+                changeSpeed(1);
+                changeReplayStart(0);
+            }
+
+            // --- Controls ---
+
+            function playOrPause() {
+                var myAudio = audioPlayerElement()
+                if (!myAudio.paused) {
+                    myAudio.pause();
+                } else {
+                    myAudio.play();
+                }
+            }
+
+            function replayOrPause() {
+                var myAudio = audioPlayerElement()
+                if (!myAudio.paused) {
+                    myAudio.pause();
+                } else {
+                    myAudio.currentTime = replayStart;
+                    myAudio.play();
+                }
+            }
+
+            function saveReplayStart() {
+                var newReplayStart = audioPlayerElement().currentTime;
+                changeReplayStart(newReplayStart);
+            }
+
+
+            // --- Drag and Drop ---
+
+            function dragOverHandler(ev) {
+                // Prevent default behavior (Prevent file from being opened)
+                ev.preventDefault();
+            }
+            function dropHandler(ev) {
+                console.log('File(s) dropped');
+
+                // Prevent default behavior (Prevent file from being opened)
+                ev.preventDefault();
+
+                if (ev.dataTransfer.items && ev.dataTransfer.items.length > 0) {
+                    if (ev.dataTransfer.items[0].kind === 'file') {
+                        document.getElementById('drop_description').style.display = "none";
+                        document.getElementById('player').style.removeProperty("display");
+
+                        var file = ev.dataTransfer.items[0].getAsFile();
+                        changeSource(file)
+                    }
+                }
+            }
+        </script>
+        <div id="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+            <div id="player" style="display: none;">
+                <h1 id="track_name" class="ui header">TrackName</h1>
+                <div>
+                    <audio id="audio_player" preload="auto" src="" controls >
+                        <p>Your browser does not support the audio element</p>
+                    </audio>
+                </div>
+                <div class="ui segment">
+                    <h2 id="replay_description" class="ui header">ReplayDescription</h2>
+                    <div class="ui basic button" onclick="playOrPause();">Play / Pause</div>
+                    <div class="ui basic button" onclick="replayOrPause();">Replay / Pause</div>
+                    <div class="ui basic button" onclick="saveReplayStart();">Mark "Replay Start"</div>
+                </div>
+                <div class="ui segment">
+                    <h2 class="ui header">Playback Speed</h2>
+                    <div class="ui basic buttons">
+                        <div id="speed_button_1" class="ui button" onclick="changeSpeed(0.5);">x0.5</div>
+                        <div id="speed_button_2" class="ui button" onclick="changeSpeed(0.75);">x0.75</div>
+                        <div id="speed_button_3" class="ui button" onclick="changeSpeed(1);">x1</div>
+                        <div id="speed_button_4" class="ui button" onclick="changeSpeed(1.5);">x1.5</div>
+                        <div id="speed_button_5" class="ui button" onclick="changeSpeed(2);">x2</div>
+                    </div>
+                </div>
+            </div>
+            <div id="drop_description" class="ui segment">
+                <h1 class="ui header">Drop track to play it</h1>
+            </div>
+        </div>
+    </body>
+</html>
